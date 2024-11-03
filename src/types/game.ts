@@ -11,6 +11,7 @@ export interface PlayerState {
   beliefs: PhilosophicalBelief[];
   completedChapters: string[];
   achievements: string[];
+  inventory: Item[];
 }
 
 export interface DialogueChoice {
@@ -42,21 +43,11 @@ export interface Item {
   id: string;
   name: string;
   description: string;
-  type: 'weapon' | 'consumable' | 'equipment' | 'quest';
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-  stackable: boolean;
-  quantity?: number;
-  effects?: {
-    hp?: number;
-    mp?: number;
-    wisdom?: number;
-    strength?: number;
-    critRate?: number;
-    critDamage?: number;
-    attack?: number;
-    defense?: number;
-  };
-  equipSlot?: 'weapon' | 'armor' | 'accessory';
+  value: number;
+  quantity: number;
+  type: string;
+  effects?: StatusEffect[];
+  rarity: string;
 }
 
 export interface Inventory {
@@ -68,16 +59,17 @@ export interface Character {
   id: string;
   name: string;
   level: number;
+  description: string;
   hp: number;
   maxHp: number;
+  mp: number;
+  maxMp: number;
   attack: number;
   defense: number;
   wisdom: number;
   strength: number;
   skills: Skill[];
   status: StatusEffect[];
-  mp: number;
-  maxMp: number;
   critRate: number;
   critDamage: number;
 }
@@ -102,7 +94,11 @@ export interface StatusEffect {
     defense?: number;
     wisdom?: number;
     strength?: number;
+    hp?: number;
+    mp?: number;
+    // 添加其他可能的效果...
   };
+  type?: 'buff' | 'debuff' | 'healing' | 'damage';  // 添加效果类型
 }
 
 export interface BattleState {
@@ -120,10 +116,30 @@ export interface BattleReward {
   strength?: number;
 }
 
-export interface Enemy extends Character {
-  reward: BattleReward;
+export interface Enemy {
+  id: string;
+  name: string;
   description: string;
   philosophy: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  mp: number;
+  maxMp: number;
+  attack: number;
+  defense: number;
+  wisdom: number;
+  strength: number;
+  skills: Skill[];
+  status: any[]; // Consider defining a proper Status type
+  reward: {
+    experience: number;
+    items?: Item[];
+    wisdom?: number;
+    strength?: number;
+  };
+  critRate: number;
+  critDamage: number;
 }
 
 export interface EquipmentState {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Character, Skill, BattleState, Enemy, BattleReward, Item, Inventory } from '../types/game';
+import { Shield, Sword, Heart, Zap } from 'lucide-react';
 
 interface BattleProps {
   player: Character;
@@ -16,6 +17,10 @@ export const Battle: React.FC<BattleProps> = ({
   onBattleEnd,
   onUseItem
 }) => {
+  if (!player || !enemy || !inventory) {
+    return <div className="p-4 text-center">Loading...</div>;
+  }
+
   const [battleState, setBattleState] = useState<BattleState>({
     player: { ...player },
     enemy: { ...enemy },
@@ -23,6 +28,8 @@ export const Battle: React.FC<BattleProps> = ({
     log: [`战斗开始：${player.name} VS ${enemy.name}`],
     isOver: false
   });
+
+  const [hasTriggeredReward, setHasTriggeredReward] = useState(false);
 
   const calculateDamage = (skill: Skill, attacker: Character, defender: Character): { damage: number; isCrit: boolean } => {
     const base = skill.damage || 0;
@@ -71,33 +78,39 @@ export const Battle: React.FC<BattleProps> = ({
   };
 
   useEffect(() => {
-    if (battleState.isOver) {
+    if (battleState.isOver && !hasTriggeredReward) {
+      setHasTriggeredReward(true);
       if (battleState.enemy.hp <= 0) {
-        onBattleEnd(true, enemy.reward);
+        if (enemy && enemy.reward) {
+          onBattleEnd(true, enemy.reward);
+        }
       } else if (battleState.player.hp <= 0) {
         onBattleEnd(false);
       }
     }
-  }, [battleState.isOver]);
+  }, [battleState.isOver, hasTriggeredReward, enemy]);
 
   const handleUseItem = (item: Item) => {
     if (battleState.turn !== 'player' || battleState.isOver) return;
 
     setBattleState(prev => {
       const newState = { ...prev };
-      if (item.effects) {
-        if (item.effects.hp) {
-          newState.player.hp = Math.min(
-            player.maxHp,
-            newState.player.hp + item.effects.hp
-          );
-        }
-        if (item.effects.mp) {
-          newState.player.mp = Math.min(
-            player.maxMp,
-            newState.player.mp + item.effects.mp
-          );
-        }
+      if (item.effects && item.effects.length > 0) {
+        // 遍历所有效果并应用
+        item.effects.forEach(effect => {
+          if (effect.effect.hp) {
+            newState.player.hp = Math.min(
+              player.maxHp,
+              newState.player.hp + effect.effect.hp
+            );
+          }
+          if (effect.effect.mp) {
+            newState.player.mp = Math.min(
+              player.maxMp,
+              newState.player.mp + effect.effect.mp
+            );
+          }
+        });
       }
 
       newState.log.push(`${player.name} 使用了 ${item.name}`);
@@ -137,103 +150,125 @@ export const Battle: React.FC<BattleProps> = ({
     }
   }, [battleState.turn]);
 
-  if (!player || !enemy) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div className="battle-container p-4 bg-gray-100 rounded-lg">
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="character-status p-4 bg-white rounded-lg">
-          <h3 className="text-xl font-bold">{player.name}</h3>
-          <div className="hp-bar mb-2">
-            HP: {battleState.player.hp}/{player.maxHp}
-            <div className="h-2 bg-gray-200 rounded">
-              <div
-                className="h-2 bg-green-500 rounded"
-                style={{ width: `${(battleState.player.hp / player.maxHp) * 100}%` }}
-              />
-            </div>
+    <div className="bg-gray-800 rounded-lg p-6 shadow-lg text-white">
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="bg-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Shield className="w-6 h-6 text-blue-400" />
+            <h3 className="text-xl font-bold">{player.name}</h3>
           </div>
-          <div className="mp-bar">
-            MP: {battleState.player.mp}/{player.maxMp}
-            <div className="h-2 bg-gray-200 rounded">
-              <div
-                className="h-2 bg-blue-500 rounded"
-                style={{ width: `${(battleState.player.mp / player.maxMp) * 100}%` }}
-              />
+          <div className="space-y-2">
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="flex items-center gap-1">
+                  <Heart className="w-4 h-4 text-red-400" />
+                  HP: {battleState.player.hp}/{player.maxHp}
+                </span>
+              </div>
+              <div className="h-2 bg-gray-600 rounded">
+                <div
+                  className="h-2 bg-gradient-to-r from-red-500 to-red-400 rounded transition-all duration-300"
+                  style={{ width: `${(battleState.player.hp / player.maxHp) * 100}%` }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="flex items-center gap-1">
+                  <Zap className="w-4 h-4 text-blue-400" />
+                  MP: {battleState.player.mp}/{player.maxMp}
+                </span>
+              </div>
+              <div className="h-2 bg-gray-600 rounded">
+                <div
+                  className="h-2 bg-gradient-to-r from-blue-500 to-blue-400 rounded transition-all duration-300"
+                  style={{ width: `${(battleState.player.mp / player.maxMp) * 100}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
-        <div className="character-status p-4 bg-white rounded-lg">
-          <h3 className="text-xl font-bold">{enemy.name}</h3>
-          <div className="hp-bar">
-            HP: {enemy.hp}/{enemy.maxHp}
-            <div className="h-2 bg-gray-200 rounded">
+
+        <div className="bg-gray-700 rounded-lg p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <Sword className="w-6 h-6 text-red-400" />
+            <h3 className="text-xl font-bold">{enemy.name}</h3>
+          </div>
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="flex items-center gap-1">
+                <Heart className="w-4 h-4 text-red-400" />
+                HP: {battleState.enemy.hp}/{enemy.maxHp}
+              </span>
+            </div>
+            <div className="h-2 bg-gray-600 rounded">
               <div
-                className="h-2 bg-red-500 rounded"
-                style={{ width: `${(enemy.hp / enemy.maxHp) * 100}%` }}
+                className="h-2 bg-gradient-to-r from-red-600 to-red-500 rounded transition-all duration-300"
+                style={{ width: `${(battleState.enemy.hp / enemy.maxHp) * 100}%` }}
               />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="enemy-info mb-4 p-4 bg-white rounded-lg">
-        <h3 className="text-xl font-bold">{enemy.name}</h3>
-        <p className="text-gray-600">{enemy.description}</p>
-        <p className="text-sm text-blue-600">哲学流派：{enemy.philosophy}</p>
+      <div className="bg-gray-700 rounded-lg p-4 mb-6">
+        <h3 className="text-xl font-bold mb-2">{enemy.name}</h3>
+        <p className="text-gray-300 mb-2">{enemy.description}</p>
+        <p className="text-sm text-blue-400">哲学流派：{enemy.philosophy}</p>
       </div>
 
-      <div className="battle-log h-40 overflow-y-auto bg-white p-4 rounded-lg mb-4">
+      <div className="bg-gray-700 rounded-lg p-4 mb-6 h-40 overflow-y-auto">
         {battleState.log.map((log, index) => (
-          <div key={index} className="text-sm">{log}</div>
+          <div key={index} className="text-sm text-gray-300 mb-1">{log}</div>
         ))}
       </div>
 
-      <div className="items-container mb-4">
-        <h4 className="font-bold mb-2">道具</h4>
-        <div className="grid grid-cols-4 gap-2">
+      <div className="mb-6">
+        <h4 className="text-lg font-bold mb-3">道具</h4>
+        <div className="grid grid-cols-4 gap-3">
           {inventory.items
-            .filter(item => item.type === 'consumable')
-            .map(item => (
+            ?.filter((item: Item) => item.type === 'consumable')
+            .map((item: Item) => (
               <button
                 key={item.id}
                 onClick={() => handleUseItem(item)}
                 disabled={battleState.turn !== 'player' || battleState.isOver}
-                className="p-2 bg-white rounded border hover:bg-gray-50 disabled:opacity-50"
+                className="bg-gray-700 p-3 rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:hover:bg-gray-700 transition-colors"
               >
-                {item.name}
-                {item.quantity && <span className="text-sm ml-1">x{item.quantity}</span>}
+                <div className="text-sm font-semibold">{item.name}</div>
+                {item.quantity && (
+                  <div className="text-xs text-gray-400">x{item.quantity}</div>
+                )}
               </button>
             ))}
         </div>
       </div>
 
-      <div className="skills-container grid grid-cols-2 gap-2">
-        {player.skills?.map((skill) => (
+      <div className="grid grid-cols-2 gap-3">
+        {player.skills?.map((skill: Skill) => (
           <button
             key={skill.id}
             onClick={() => handleSkillUse(skill)}
             disabled={battleState.turn !== 'player' || battleState.isOver}
-            className="skill-button p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
+            className="bg-gradient-to-r from-blue-600 to-blue-500 p-3 rounded-lg hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:hover:from-blue-600 disabled:hover:to-blue-500 transition-all duration-300"
           >
             {skill.name}
           </button>
         ))}
       </div>
 
-      {battleState.isOver && (
-        <div className="reward-info p-4 bg-green-100 rounded-lg">
-          <h4 className="font-bold text-green-800">战斗奖励：</h4>
-          <ul className="text-sm text-green-700">
+      {battleState.isOver && enemy && enemy.reward && (
+        <div className="mt-6 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg p-4">
+          <h4 className="font-bold text-lg mb-2">战斗奖励</h4>
+          <ul className="space-y-1 text-sm">
             <li>经验值：+{enemy.reward.experience}</li>
             {enemy.reward.wisdom && <li>智慧：+{enemy.reward.wisdom}</li>}
             {enemy.reward.strength && <li>力量：+{enemy.reward.strength}</li>}
-            {enemy.reward.items && (
+            {enemy.reward.items && enemy.reward.items.length > 0 && (
               <li>
                 获得物品：
-                {enemy.reward.items.map(item => item.name).join(', ')}
+                {enemy.reward.items.map(item => item?.name || '未知物品').join(', ')}
               </li>
             )}
           </ul>

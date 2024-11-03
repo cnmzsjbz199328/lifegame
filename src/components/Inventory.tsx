@@ -14,16 +14,22 @@ export const Inventory: React.FC<InventoryProps> = ({
   onUseItem,
   onDropItem,
 }) => {
+  if (!items) {
+    return <div>Loading inventory...</div>;
+  }
+
   return (
     <div className="inventory-container">
       <h2 className="text-xl font-bold mb-4">背包 ({items.length}/{capacity})</h2>
       <div className="grid grid-cols-4 gap-4">
-        {items.map((item) => (
+        {items.filter(item => item).map((item) => (
           <div
             key={item.id}
-            className="inventory-slot bg-gray-100 p-4 rounded-lg hover:bg-gray-200 cursor-pointer"
+            className={`inventory-slot bg-gray-100 p-4 rounded-lg hover:bg-gray-200 cursor-pointer ${
+              item.rarity ? `rarity-${item.rarity}` : ''
+            }`}
           >
-            <div className={`item-name text-${item.rarity}`}>{item.name}</div>
+            <div className="item-name">{item.name}</div>
             <div className="text-sm text-gray-600">{item.description}</div>
             {item.quantity && <div className="text-sm">数量: {item.quantity}</div>}
             <div className="flex gap-2 mt-2">

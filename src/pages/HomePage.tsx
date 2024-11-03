@@ -25,7 +25,7 @@ export default function HomePage() {
   });
 
   const [inventory, setInventory] = useState({
-    items: items.slice(0, 2), // 初始道具
+    items: items.filter(item => item != null).slice(0, 2), // 确保没有 undefined 的物品
     capacity: 16
   });
 
@@ -34,6 +34,7 @@ export default function HomePage() {
   const player: Character = {
     id: 'player',
     name: '哲学家',
+    description: '一位追求智慧的求道者',
     level: 1,
     hp: 100,
     maxHp: 100,
@@ -60,7 +61,7 @@ export default function HomePage() {
   };
 
   const handleReset = () => {
-    if (window.confirm('确定要重新开始游戏吗？这将清除所有进度。')) {
+    if (window.confirm('确定要重新开始游戏吗？这将清除所有进。')) {
       dispatch(resetGame());
       setCurrentChallengeIndex(0);
     }
@@ -106,73 +107,95 @@ export default function HomePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">战斗的一生</h1>
-        <button
-          onClick={handleReset}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-        >
-          重新开始
-        </button>
-      </div>
-      <PlayerStatus />
-      <AchievementsList />
-      {currentChallengeIndex < philosophicalChallenges.length ? (
-        <PhilosophicalChallenge
-          challenge={philosophicalChallenges[currentChallengeIndex]}
-          onComplete={handleChallengeComplete}
-        />
-      ) : (
-        <div className="text-center p-8 bg-white rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4">旅程完成</h2>
-          <p className="text-gray-600 mb-4">恭喜你完成了所有的哲学挑战！</p>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            战斗的一生
+          </h1>
           <button
             onClick={handleReset}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
           >
-            开始新的旅程
+            重新开始
           </button>
         </div>
-      )}
-      <AchievementNotification />
-      <Inventory
-        items={inventory.items}
-        capacity={inventory.capacity}
-        onUseItem={handleUseItem}
-        onDropItem={handleDropItem}
-      />
-      {currentBattle ? (
-        <Battle
-          player={player}
-          enemy={currentBattle}
-          inventory={inventory}
-          onBattleEnd={handleBattleEnd}
-          onUseItem={handleUseItem}
-        />
-      ) : (
-        <div className="battle-selection mt-4">
-          <h2 className="text-xl font-bold mb-4">选择对手</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {enemies.map(enemy => (
-              <button
-                key={enemy.id}
-                onClick={() => setCurrentBattle(enemy)}
-                className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
-              >
-                <h3 className="font-bold">{enemy.name}</h3>
-                <p className="text-sm text-gray-600">等级 {enemy.level}</p>
-              </button>
-            ))}
+
+        <div className="grid gap-6">
+          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+            <PlayerStatus />
           </div>
+
+          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+            <AchievementsList />
+          </div>
+
+          {currentChallengeIndex < philosophicalChallenges.length ? (
+            <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+              <PhilosophicalChallenge
+                challenge={philosophicalChallenges[currentChallengeIndex]}
+                onComplete={handleChallengeComplete}
+              />
+            </div>
+          ) : (
+            <div className="bg-gray-800 rounded-lg p-6 shadow-lg text-center">
+              <h2 className="text-2xl font-bold mb-4">旅程完成</h2>
+              <p className="text-gray-300 mb-4">恭喜你完成了所有的哲学挑战！</p>
+              <button
+                onClick={handleReset}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                开始新的旅程
+              </button>
+            </div>
+          )}
+
+          <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+            <Inventory
+              items={inventory.items}
+              capacity={inventory.capacity}
+              onUseItem={handleUseItem}
+              onDropItem={handleDropItem}
+            />
+          </div>
+
+          {!currentBattle && (
+            <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
+              <h2 className="text-xl font-bold mb-4">选择对手</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {enemies.map(enemy => (
+                  <button
+                    key={enemy.id}
+                    onClick={() => setCurrentBattle(enemy)}
+                    className="bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    <h3 className="font-bold">{enemy.name}</h3>
+                    <p className="text-sm text-gray-300">等级 {enemy.level}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentBattle && (
+            <Battle
+              player={player}
+              enemy={currentBattle}
+              inventory={inventory}
+              onBattleEnd={handleBattleEnd}
+              onUseItem={handleUseItem}
+            />
+          )}
         </div>
-      )}
-      {showReward && currentReward && (
-        <BattleRewardNotification
-          reward={currentReward}
-          onClose={() => setShowReward(false)}
-        />
-      )}
+
+        <AchievementNotification />
+        {showReward && currentReward && (
+          <BattleRewardNotification
+            reward={currentReward}
+            onClose={() => setShowReward(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }
