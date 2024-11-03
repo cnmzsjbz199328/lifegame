@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import PlayerStatus from '../components/PlayerStatus';
 import PhilosophicalChallenge from '../components/PhilosophicalChallenge';
@@ -7,6 +7,8 @@ import AchievementNotification from '../components/AchievementNotification';
 import { completeChapter, resetGame } from '../store/gameSlice';
 import { philosophicalChallenges } from '../data/challenges';
 import { RootState } from '../store';
+import { Inventory } from '../components/Inventory';
+import { items } from '../data/items';
 
 export default function HomePage() {
   const dispatch = useDispatch();
@@ -15,6 +17,11 @@ export default function HomePage() {
     return completedChapters.length < philosophicalChallenges.length
       ? completedChapters.length
       : philosophicalChallenges.length;
+  });
+
+  const [inventory, setInventory] = useState({
+    items: items.slice(0, 2), // 初始道具
+    capacity: 16
   });
 
   const handleChallengeComplete = () => {
@@ -29,6 +36,24 @@ export default function HomePage() {
       dispatch(resetGame());
       setCurrentChallengeIndex(0);
     }
+  };
+
+  const handleUseItem = (item: Item) => {
+    // 处理使用道具的逻辑
+    if (item.type === 'consumable') {
+      setInventory(prev => ({
+        ...prev,
+        items: prev.items.filter(i => i.id !== item.id)
+      }));
+      // 应用道具效果...
+    }
+  };
+
+  const handleDropItem = (item: Item) => {
+    setInventory(prev => ({
+      ...prev,
+      items: prev.items.filter(i => i.id !== item.id)
+    }));
   };
 
   return (
@@ -62,6 +87,12 @@ export default function HomePage() {
         </div>
       )}
       <AchievementNotification />
+      <Inventory
+        items={inventory.items}
+        capacity={inventory.capacity}
+        onUseItem={handleUseItem}
+        onDropItem={handleDropItem}
+      />
     </div>
   );
 }

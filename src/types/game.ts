@@ -37,3 +37,23 @@ export interface Achievement {
   icon: string;
   condition: (state: PlayerState) => boolean;
 }
+
+export interface Item {
+  id: string;
+  name: string;
+  description: string;
+  type: 'consumable' | 'equipment' | 'quest';
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  stackable: boolean;
+  quantity?: number;
+  effects?: {
+    wisdom?: number;
+    strength?: number;
+    // 其他可能的效果...
+  };
+}
+
+export interface Inventory {
+  items: Item[];
+  capacity: number;
+}

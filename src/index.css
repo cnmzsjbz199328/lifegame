@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 添加到现有的 CSS 中 */
+.inventory-container {
+  @apply bg-white rounded-lg shadow-lg p-6 my-4;
+}
+
+.inventory-slot {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.item-name {
+  @apply font-semibold;
+}
+
+.item-name.text-common { @apply text-gray-600; }
+.item-name.text-rare { @apply text-blue-500; }
+.item-name.text-epic { @apply text-purple-500; }
+.item-name.text-legendary { @apply text-yellow-500; }
