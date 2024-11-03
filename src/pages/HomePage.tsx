@@ -4,11 +4,16 @@ import PlayerStatus from '../components/PlayerStatus';
 import PhilosophicalChallenge from '../components/PhilosophicalChallenge';
 import AchievementsList from '../components/AchievementsList';
 import AchievementNotification from '../components/AchievementNotification';
-import { completeChapter, resetGame } from '../store/gameSlice';
+import { completeChapter, resetGame, updatePlayerStats } from '../store/gameSlice';
 import { philosophicalChallenges } from '../data/challenges';
 import { RootState } from '../store';
 import { Inventory } from '../components/Inventory';
 import { items } from '../data/items';
+import { Battle } from '../components/Battle';
+import { Character, Enemy, BattleReward, Item } from '../types/game';
+import { enemies } from '../data/characters';
+import { BattleRewardNotification } from '../components/BattleRewardNotification';
+import { basicSkills } from '../data/characters';
 
 export default function HomePage() {
   const dispatch = useDispatch();
@@ -23,6 +28,29 @@ export default function HomePage() {
     items: items.slice(0, 2), // 初始道具
     capacity: 16
   });
+
+  const [currentBattle, setCurrentBattle] = useState<Enemy | null>(null);
+
+  const player: Character = {
+    id: 'player',
+    name: '哲学家',
+    level: 1,
+    hp: 100,
+    maxHp: 100,
+    attack: 12,
+    defense: 8,
+    wisdom: 10,
+    strength: 6,
+    skills: basicSkills,
+    status: [],
+    mp: 100,
+    maxMp: 100,
+    critRate: 15,  // 15% 暴击率
+    critDamage: 150,  // 150% 暴击伤害
+  };
+
+  const [showReward, setShowReward] = useState(false);
+  const [currentReward, setCurrentReward] = useState<BattleReward | null>(null);
 
   const handleChallengeComplete = () => {
     dispatch(completeChapter(philosophicalChallenges[currentChallengeIndex].id));
@@ -54,6 +82,27 @@ export default function HomePage() {
       ...prev,
       items: prev.items.filter(i => i.id !== item.id)
     }));
+  };
+
+  const handleBattleEnd = (won: boolean, reward?: BattleReward) => {
+    if (won && reward) {
+      dispatch(updatePlayerStats({
+        experience: reward.experience,
+        wisdom: reward.wisdom || 0,
+        strength: reward.strength || 0
+      }));
+
+      if (reward.items) {
+        setInventory(prev => ({
+          ...prev,
+          items: [...prev.items, ...(reward.items || [])]
+        }));
+      }
+
+      setCurrentReward(reward);
+      setShowReward(true);
+    }
+    setCurrentBattle(null);
   };
 
   return (
@@ -93,6 +142,37 @@ export default function HomePage() {
         onUseItem={handleUseItem}
         onDropItem={handleDropItem}
       />
+      {currentBattle ? (
+        <Battle
+          player={player}
+          enemy={currentBattle}
+          inventory={inventory}
+          onBattleEnd={handleBattleEnd}
+          onUseItem={handleUseItem}
+        />
+      ) : (
+        <div className="battle-selection mt-4">
+          <h2 className="text-xl font-bold mb-4">选择对手</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {enemies.map(enemy => (
+              <button
+                key={enemy.id}
+                onClick={() => setCurrentBattle(enemy)}
+                className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
+              >
+                <h3 className="font-bold">{enemy.name}</h3>
+                <p className="text-sm text-gray-600">等级 {enemy.level}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {showReward && currentReward && (
+        <BattleRewardNotification
+          reward={currentReward}
+          onClose={() => setShowReward(false)}
+        />
+      )}
     </div>
   );
 }

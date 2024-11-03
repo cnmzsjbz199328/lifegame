@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDispatch } from 'react-redux';
-import { DialogueChoice, PhilosophicalChallengeType } from '../types/game';
+import { PhilosophicalChallengeType, DialogueChoice } from '../types/game';
 import { updateBelief } from '../store/gameSlice';
 
-interface Props {
+interface PhilosophicalChallengeProps {
   challenge: PhilosophicalChallengeType;
   onComplete: () => void;
 }
 
-export default function PhilosophicalChallenge({ challenge, onComplete }: Props) {
-  const [selectedChoice, setSelectedChoice] = useState<DialogueChoice | null>(null);
+const PhilosophicalChallenge: React.FC<PhilosophicalChallengeProps> = ({
+  challenge,
+  onComplete
+}) => {
   const dispatch = useDispatch();
 
   const handleChoice = (choice: DialogueChoice) => {
-    setSelectedChoice(choice);
     dispatch(updateBelief({
-      id: challenge.concept,
-      concept: challenge.concept,
+      id: choice.impact.belief,
       strength: choice.impact.strength,
-      understanding: choice.impact.understanding,
+      understanding: choice.impact.understanding
     }));
     onComplete();
   };
@@ -39,4 +39,6 @@ export default function PhilosophicalChallenge({ challenge, onComplete }: Props)
       </div>
     </div>
   );
-}
+};
+
+export default PhilosophicalChallenge;

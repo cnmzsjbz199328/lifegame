@@ -1,69 +1,60 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PlayerState, PhilosophicalBelief } from '../types/game';
-import { loadGame, saveGame } from '../services/saveSystem';
-import { achievements } from '../data/achievements';
 
-const savedState = loadGame();
+interface PlayerStatsUpdate {
+  experience: number;
+  wisdom: number;
+  strength: number;
+}
 
-const initialState: PlayerState = savedState || {
+interface BeliefUpdate {
+  id: string;
+  strength: number;
+  understanding: number;
+}
+
+const initialState: PlayerState = {
   level: 1,
   experience: 0,
   beliefs: [],
   completedChapters: [],
-  achievements: [],
+  achievements: []
 };
 
 const gameSlice = createSlice({
   name: 'game',
   initialState,
   reducers: {
-    updateBelief(state, action: PayloadAction<PhilosophicalBelief>) {
-      const index = state.beliefs.findIndex(b => b.id === action.payload.id);
-      if (index >= 0) {
-        state.beliefs[index] = action.payload;
-      } else {
-        state.beliefs.push(action.payload);
-      }
-      checkAchievements(state);
-      saveGame(state);
-    },
-    completeChapter(state, action: PayloadAction<string>) {
+    completeChapter: (state, action: PayloadAction<string>) => {
       if (!state.completedChapters.includes(action.payload)) {
         state.completedChapters.push(action.payload);
-        state.experience += 100;
-        if (state.experience >= state.level * 1000) {
-          state.level += 1;
-          state.experience = 0;
-        }
-        checkAchievements(state);
-        saveGame(state);
       }
     },
-    unlockAchievement(state, action: PayloadAction<string>) {
-      if (!state.achievements.includes(action.payload)) {
-        state.achievements.push(action.payload);
-        saveGame(state);
+    resetGame: () => initialState,
+    updatePlayerStats: (state, action: PayloadAction<PlayerStatsUpdate>) => {
+      state.experience += action.payload.experience;
+      // 可以添加升级逻辑
+      if (state.experience >= 1000) {
+        state.level += 1;
+        state.experience -= 1000;
       }
     },
-    resetGame(state) {
-      state.level = 1;
-      state.experience = 0;
-      state.beliefs = [];
-      state.completedChapters = [];
-      state.achievements = [];
-      saveGame(state);
-    },
-  },
+    updateBelief: (state, action: PayloadAction<BeliefUpdate>) => {
+      const belief = state.beliefs.find(b => b.id === action.payload.id);
+      if (belief) {
+        belief.strength += action.payload.strength;
+        belief.understanding += action.payload.understanding;
+      } else {
+        state.beliefs.push({
+          id: action.payload.id,
+          concept: action.payload.id,
+          strength: action.payload.strength,
+          understanding: action.payload.understanding
+        });
+      }
+    }
+  }
 });
 
-// Helper function to check and unlock achievements
-const checkAchievements = (state: PlayerState) => {
-  achievements.forEach(achievement => {
-    if (!state.achievements.includes(achievement.id) && achievement.condition(state)) {
-      state.achievements.push(achievement.id);
-    }
-  });
-};
-
-export const { updateBelief, completeChapter, unlockAchievement, resetGame } = gameSlice.actions;
+export const { completeChapter, resetGame, updatePlayerStats, updateBelief } = gameSlice.actions;
 export default gameSlice.reducer;
