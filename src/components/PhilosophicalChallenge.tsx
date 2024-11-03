@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { DialogueChoice, PhilosophicalChallenge } from '../types/game';
+import { DialogueChoice, PhilosophicalChallengeType } from '../types/game';
 import { updateBelief } from '../store/gameSlice';
 
 interface Props {
-  challenge: PhilosophicalChallenge;
+  challenge: PhilosophicalChallengeType;
   onComplete: () => void;
 }
 

@@ -23,7 +23,7 @@ export interface DialogueChoice {
   };
 }
 
-export interface PhilosophicalChallenge {
+export interface PhilosophicalChallengeType {
   id: string;
   concept: string;
   question: string;
