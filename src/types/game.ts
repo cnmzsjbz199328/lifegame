@@ -12,6 +12,11 @@ export interface PlayerState {
   completedChapters: string[];
   achievements: string[];
   inventory: Item[];
+  currentLocation: string;
+  diaryEntries: DiaryEntry[];
+  resources: Record<string, number>;
+  lastAction?: string;
+  actionCooldowns: Record<string, number>;
 }
 
 export interface DialogueChoice {
@@ -146,4 +151,32 @@ export interface EquipmentState {
   weapon?: Item;
   armor?: Item;
   accessory?: Item;
+}
+
+export interface DiaryEntry {
+  text: string;
+  type: 'normal' | 'warning' | 'discovery';
+  timestamp: number;
+}
+
+export interface Location {
+  id: string;
+  name: string;
+  description: string;
+  availableActions: string[];
+  resources: Record<string, number>;
+}
+
+export interface GameAction {
+  id: string;
+  label: string;
+  description: string;
+  requirements?: {
+    resources?: Record<string, number>;
+    level?: number;
+  };
+  rewards?: {
+    resources?: Record<string, number>;
+    experience?: number;
+  };
 }
